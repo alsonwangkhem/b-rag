@@ -23,11 +23,23 @@ SKIP_TYPES: set = set()
 
 # Classification JSON filename stem → tool_id used in the database
 TOOL_IDS = {
+    # ELI group
     "___ specific strategy ELI": "eli",
+    "Generate ELI questions": "eli",
+    "___ ACB to ELI Q": "eli",
+    # ACB group
     "__ ACB diagnostic session editing tool": "acb",
-    "___ Fill ins- Review Source Belief Structure": "fill_ins",
-    "___Simplified client steps": "simplified_steps",
+    # Cones group
+    "___Green Cones Tool": "cones",
+    "___Red to Green Cone Strategy": "cones",
+    # Timeline group
     "___Timeline Dysregulated behavior summary": "timeline",
+    "___Timeline Pattern Opposition - Prompt": "timeline",
+    # Source Belief group
+    "___ Fill ins- Review Source Belief Structure": "source_belief",
+    "__Rebellon Zones for FS Doc __": "source_belief",
+    # Simplified Steps
+    "___Simplified client steps": "simplified_steps",
 }
 
 EMBEDDING_BATCH_SIZE = 50
@@ -51,9 +63,6 @@ def ingest_file(json_path: Path, tool_id: str):
     print(f"  tool_id : {tool_id}")
     print(f"  chunks  : {len(chunks)} total, {len(to_ingest)} to ingest, {skipped} skipped")
 
-    # Wipe any previous run for this tool so re-running is safe
-    supabase.table("chunks").delete().eq("tool_id", tool_id).execute()
-    print(f"  Cleared existing rows for '{tool_id}'")
 
     inserted = 0
     for start in range(0, len(to_ingest), EMBEDDING_BATCH_SIZE):
@@ -91,6 +100,15 @@ def main():
     if not json_files:
         print("No JSON files found in classifications/")
         return
+
+    # Wipe each tool_id once upfront so grouped files don't overwrite each other
+    seen_tool_ids: set = set()
+    for json_path in json_files:
+        tool_id = TOOL_IDS.get(json_path.stem)
+        if tool_id and tool_id not in seen_tool_ids:
+            supabase.table("chunks").delete().eq("tool_id", tool_id).execute()
+            print(f"Cleared existing rows for '{tool_id}'")
+            seen_tool_ids.add(tool_id)
 
     for json_path in json_files:
         tool_id = TOOL_IDS.get(json_path.stem)
