@@ -40,6 +40,8 @@ TOOL_IDS = {
     "__Rebellon Zones for FS Doc __": "source_belief",
     # Simplified Steps
     "___Simplified client steps": "simplified_steps",
+    # Fear Dates
+    "___ Fear Date Generator ___": "fear_dates",
 }
 
 EMBEDDING_BATCH_SIZE = 50
